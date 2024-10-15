@@ -1,16 +1,27 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import os
 from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
-app = Flask(__name__)
 
+# Initialize FastAPI app
+app = FastAPI()
+
+# Initialize Groq client
 client = Groq(
     api_key=os.environ.get("GROQ_API_KEY"),
 )
 
-def generate_lyrics_from_groq(prompt):
+# Pydantic model for request validation
+class LyricsRequest(BaseModel):
+    description: str
+    language: str = "English"
+    genre: str = "Pop"
+
+# Function to generate lyrics using Groq API
+def generate_lyrics_from_groq(prompt: str) -> str:
     chat_completion = client.chat.completions.create(
         messages=[
             {
@@ -26,29 +37,30 @@ def generate_lyrics_from_groq(prompt):
     )
     return chat_completion.choices[0].message.content
 
-@app.route('/generate_lyrics', methods=['POST'])
-def generate_lyrics():
-    data = request.json
 
-    # Extract the fields from JSON payload
-    song_description = data.get('description', '')
-    language = data.get('language', 'English')
-    genre = data.get('genre', 'Pop')
+# POST endpoint to generate lyrics
+@app.post("/generate_lyrics")
+async def generate_lyrics(request: LyricsRequest):
+    song_description = request.description
+    language = request.language
+    genre = request.genre
 
-    # Error handling if description is missing
+    # Check if description is empty
     if not song_description:
-        return jsonify({'error': 'Please provide a song description'}), 400
+        raise HTTPException(status_code=400, detail="Please provide a song description.")
 
-    # Create the prompt for the lyrics generation
+    # Create the prompt for lyrics generation
     prompt = f"Generate song lyrics in {language}, genre: {genre}, description: {song_description}"
 
     try:
         # Generate lyrics using the external API (Groq)
         generated_lyrics = generate_lyrics_from_groq(prompt)
-        return jsonify({'lyrics': generated_lyrics})
+        return {"lyrics": generated_lyrics}
     
     except Exception as e:
-        return jsonify({'error': 'Failed to generate lyrics', 'details': str(e)}), 500
+        raise HTTPException(status_code=500, detail=f"Failed to generate lyrics: {str(e)}")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
