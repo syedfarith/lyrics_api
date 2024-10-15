@@ -10,8 +10,8 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=["http://127.0.0.1:5000", "http://localhost:5000","http://localhost:3000"],
-     allow_origins=["*"], # Allow your frontend origin
+    #allow_origins=["http://127.0.0.1:5000", "http://localhost:5000","http://localhost:3000","https://lyrics-react-flax.vercel.app/"], # Allow your frontend origin
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers (Authorization, Content-Type, etc.)
