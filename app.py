@@ -3,12 +3,18 @@ from pydantic import BaseModel
 import os
 from groq import Groq
 from dotenv import load_dotenv
-
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5000", "http://localhost:5000"],  # Allow your frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers (Authorization, Content-Type, etc.)
+)
 # Initialize Groq client
 client = Groq(
     api_key=os.environ.get("GROQ_API_KEY"),
